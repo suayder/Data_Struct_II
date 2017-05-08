@@ -30,6 +30,13 @@ int height (Tno* root){ // calculate height
 	}
 }
 
+void delete_tree(Tno **root){
+	if((*root) == NULL) return;
+	if((*root)->left) delete_tree(&(*root)->left);
+	if((*root)->right) delete_tree(&(*root)->right);
+	free(*root);
+}
+
 int balanceFactor(Tno *root){
     if(root == NULL) return 0;
     return (height(root->right) - height(root->left));
@@ -190,7 +197,7 @@ void RemoveAVL(Tno **root, int key){
 		(*root) = NULL;
 		return;
 	}
-	// Case there isn't sons
+	// Case there isn't child
 	else if(aux->left==NULL && aux->right == NULL){
 
 		if(father->left == aux) father->left = NULL;
@@ -219,7 +226,7 @@ void RemoveAVL(Tno **root, int key){
 		free(aux);
 		(*root) = balance_AVL((*root));
 	}
-	// Two sons
+	// Two child
 	else
 	{
 		//Get son to the left of the sub tree to the right
@@ -265,17 +272,43 @@ void RemoveAVL(Tno **root, int key){
 
 }
 
-void show_fathers_and_sons(Tno *root){
-	if(root->left && (root->left->left!=NULL || root->left->right!=NULL)) show_fathers_and_sons(root->left);
+void show_fathers_and_child(Tno *root){
+	if(root->left && (root->left->left!=NULL || root->left->right!=NULL)) show_fathers_and_child(root->left);
 
 	printf("\nFather key: %d", root->key);
 	if(root->left != NULL) printf(" - Left son key: %d", root->left->key);
 	if(root->right) printf(" - Right son key: %d",root->right->key);
 	puts("");
 
-	if(root->right && (root->right->right!=NULL || root->right->left!=NULL)) show_fathers_and_sons(root->right);
+	if(root->right && (root->right->right!=NULL || root->right->left!=NULL)) show_fathers_and_child(root->right);
 }
 
+int contNodes(Tno *root){
+	if(root==NULL){
+		return 0;
+	}
+	int aux_left = 0, aux_right = 0;
+	if(root->left != NULL)
+		aux_left = contNodes(root->left)+1;
+	if(root->right != NULL)
+		aux_right = contNodes(root->right)+1;
+	printf("\nKey subtree: %d --- Nodes number: %d\n", root->key, aux_left+aux_right);
+	return (aux_left+aux_right);
+}
+
+void order_A(Tno *root){
+	if(root == NULL) return;
+	printf("KEY: %d\n", root->key);
+	order_A(root->left);
+	order_B(root->right);
+}
+
+void order_B(Tno *root){
+	if(root == NULL) return;
+	order_B(root->left);
+	printf("KEY: %d\n", root->key);
+	order_A(root->right);
+}
 
 int main(void) {
 
@@ -294,13 +327,97 @@ int main(void) {
 	  insert_avl(&root, 13);
 	  insert_avl(&root, 1);
 
+	  puts("\n\n\nTree already insered:\n\n");
 	  R_print_pre_order(root);
-	  puts("---------");
-	  RemoveAVL(&root, 20);
+	  int option, value;
+	  Tno *aux;
+	  while(1){
+		  printf("\n\n------------------------\n\n");
+		  printf("type:\n1 - Insert \n2 - Delete Node\n3 - Search\n4 - Print in order\n5 - Print pre-order\n6 - print order A\n7 - print order B\n8 - Print child of each father\n9 - Print number of nodes in each subtree\n10 - Delete tree\nAnother number to exit\n: ");
+		  scanf("%d", &option);
+		  switch(option){
+			  case 1:
+				  printf("Enter value to insert: ");
+				  scanf("%d", &value);
+				  insert_avl(&root, value);
+				  break;
+			  case 2:
+				  if(root != NULL){
+					  printf("Enter value to be deleted: ");
+					  scanf("%d", &value);
+					  RemoveAVL(&root, value);
+				  }
+				  else printf("\nTree is empty!\n");
+				  break;
+			  case 3:
+				  printf("Enter the value to be searched: ");
+				  scanf("%d", &value);
+				  aux = search(root, value);
+				  if(aux != NULL){
+					  printf("\nSuccess. Value: %d\n", aux->key);
+				  }
+				  else
+					  printf("\n Not found value\n");
+				  break;
+			  case 4:
+				   if(root != NULL){
+					   printf("\nVALUES IN ORDER: \n\n");
+					   R_print_in_order(root);
+				   }
+				  else printf("\nTree is empty!\n\n");
+				  break;
+			  case 5:
+				  if(root != NULL){
+					  printf("\nVALUES PRE ORDER: \n\n");
+					  R_print_pre_order(root);
+				  }
+				  else printf("\nTree is empty!\n");
+				  break;
+			  case 6:
+				  if(root != NULL){
+					  order_A(root);
+					  printf("\nVALUES IN ORDER A: \n\n");
+				  }
+				  else printf("\nTree is empty!\n");
+				  break;
+			  case 7:
+				  if(root != NULL){
+					  printf("\nVALUES IN ORDER B: \n\n");
+					  order_B(root);
+				  }
+				  else printf("\nTree is empty!\n");
+				  break;
+			  case 8:
+				  if(root != NULL){
+					  printf("\nChild of each father:\n\n");
+					  show_fathers_and_child(root);
+		  	  	  }
+				  else printf("\nTree is empty!\n");
+				  break;
+			  case 9:
+				  printf("\n");
+				  if(root != NULL) R_print_in_order(root);
+				  else printf("\nTree is empty!\n");
+				  break;
+			  case 10:
+				  delete_tree(&root);
+				  root = NULL;
+				  printf("\nTree deleted. Now Tree is empty!\n");
+				  break;
+
+			  default: return EXIT_SUCCESS;
+		  }
+	  }
+	  /*RemoveAVL(&root, 20);
 	  R_print_pre_order(root);
 
 
-	  show_fathers_and_sons(root);
+	  show_fathers_and_child(root);
+
+	  contNodes(root);
+
+	  puts("Order A and B:\n");
+	  order_A(root);*/
 
 
 
