@@ -4,7 +4,7 @@
  Author      : COSTA, S.M.
  Version     :
  Copyright   : Your copyright notice
- Description : Hello World in C, Ansi-style
+ Description : AVL Tree in C, Ansi-style
  ============================================================================
  */
 
@@ -408,17 +408,6 @@ int main(void) {
 			  default: return EXIT_SUCCESS;
 		  }
 	  }
-	  /*RemoveAVL(&root, 20);
-	  R_print_pre_order(root);
-
-
-	  show_fathers_and_child(root);
-
-	  contNodes(root);
-
-	  puts("Order A and B:\n");
-	  order_A(root);*/
-
 
 
 	return EXIT_SUCCESS;
