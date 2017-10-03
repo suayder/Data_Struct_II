@@ -1,0 +1,632 @@
+\documentclass[report]{uftex}
+\usepackage{minted} % para código fonte
+% ---- Esse comando cria o nome uftex estilizado
+\newcommand\uftex{UF\TeX}
+% ----  Esse comandos são necessário no pré-ambulo para a impressão da lista de lista abreviatuas e de símbolos
+\makelosymbols
+\makeloabbreviations
+% ---- Início do documento
+\begin{document}
+  % ---- Descrição do título do trabalho 
+  \title{Árvore B e Árvore Rubro Negra}
+  % ---- Nome do autor ou autores do trabalho
+  \author{Suayder}{Milhomem Costa}
+  % ---- Nome do orientador do trabalho. O último campo representa o título do professor
+  \advisor{Prof.}{Warley}{Gramacho da Silva}{Ph.D.}
+  % ---- Descrição dos professores que compõem a banca examinadora
+  \examiner{Prof.}{Nome do Primeiro Examinador Sobrenome}{D.Sc.}
+  \examiner{Prof.}{Nome do Segundo Examinador Sobrenome}{Ph.D.}
+  \examiner{Prof.}{Nome do Terceiro Examinador Sobrenome}{D.Sc.}
+  % ---- Departamento representa o curso ao qual o trabalho está sendo apresentado. Descrito por meio de duas iniciais do curso
+  \department{CC}
+  % ---- Data da apresentação do trabalho
+  \date{11}{2016}
+  % ---- Comando responsável por criar a capa do trabalho e/ou folha de resto conforme a configuração exigida
+  \maketitle
+  % ---- Esse comando marca o inicio dos elementos pré-textuais, e adiciona a numeração de páginas em algarismos romanos em caixa baixa
+  \frontmatter
+  
+  % ---- Cria o sumário. OBRIGATÓRIO
+  \tableofcontents % sumário
+% --- Marca o inicio dos elementos textuais. Capítulos.
+\mainmatter
+% ---- Defino o espaçamento de um e meio centímetros
+\onehalfspacing
+% ----------------------------------------------------------------------------------------------------- %
+% Capítulos do trabalho
+% ----------------------------------------------------------------------------------------------------- %
+\chapter{Introdução}
+\label{sec:introducao}
+
+\noindent Árvores são uma forma de organizar dados e representa-los de maneira hierárquica. O objetivo de representar dados dessa maneira é uma forma de otimizar problemas de busca. Devido a isso o nosso foco aqui serão as Árvores B e Árvores Rubro Negras,que são dois métodos para resolução desses problemas. Neste artigo serão apresentados conceitos das mesmas, bem como as funções básicas de manipulação que serão as inserções, exclusões, pesquisa e balanceamento, esta ultima é uma função interna da árvore que deve ser implementada para garantir a máxima eficiência possível nas operações.
+
+%% ------------------------------------------------------------------------- %%
+\chapter{Árvores Rubro-Negras}
+\label{sec:arvores rubro-negras}
+    \noindent As árvores rubro-negras (Red-Black Tree) são árvores binárias de busca, ou seja, é balanceada, para manter esse balanceamento ela utiliza o critério de cores, onde há regras para manter a mesma colorida de forma que esteja balanceada. Tais regras são:
+    \begin{enumerate}
+        \item Todos os nós devem possuir uma cor;
+        \item A raiz sempre será preta;
+        \item Todos os nós folhas Nulos são pretos;
+        \item Um nó vermelho jamais poderá ter um filho vermelho;
+        \item Partindo de um determinado nó, todos os caminhos até chegar nas folhas possuem um número igual de nós pretos;
+    \end{enumerate}
+    
+    Essas propriedades asseguram que a árvore esteja sempre balanceada, pois sempre na inserção ou remoção a árvore é alterada, assim pode ser necessário fazer o ajuste de cores novamente ou fazer as rotações, pois assim pode ser corrigido possíveis violações das propriedades da árvore. Devido a simplicidade em nossos códigos utilizaremos uma variação das árvores rubro-negras que são as árvores rubro-negras caídas à esquerda, ela possui apenas uma propriedade a mais, diz que: Se o nó é vermelho ele sempre será filho esquerdo do pai.
+    
+    Em relação as árvores AVL, as árvores rubro-negras são mais lentas na operação de busca, contudo mais rápidas nas operações de inserção e remoção. Isso ocorre devido a árvore AVL ser mais balanceada que a rubro-negra, porém para ser tão balanceada é necessário um maior número de rotações nas operações de inserção e remoção, o que já é o motivo das rubro-negras serem mais rápidas nesses processos. Nas structs do código o que aumenta é só uma variável para cor.
+    
+    \begin{lstlisting} [backgroundcolor=\color{cyan!10}]
+        typedef struct no{
+            int info;
+            struct no *right;
+            struct no *left;
+            char collor; //foi escolhido um char para determinar as cores
+        }Tree;
+    \end{lstlisting}
+%% ------------------------------------------------------------------------- %% 
+\section{Rotações}
+\label{sec:rotacoes}
+
+    As rotações são operações básicas de balanceamento de uma árvore (lembrando que há outras funções para balanceamento) há dois tipos de rotações na árvore rubro-negra, a direita e a esquerda, elas são tem a mesma ideia das rotações que conhecemos das árvores AVL, a diferença é que alteramos a cor dos nós.
+
+\begin{lstlisting} [backgroundcolor=\color{cyan!10}]
+    Tree *left-rotation(Tree *root){
+        Tree *tree=root->dir;
+        root->right=tree->left
+        tree->left=root;
+        tree->collor=root->collor; // aqui a cor da nova raiz será a cor da raiz
+        root->collor='r';//Agora a raiz(que é filho esquerdo) recebe a cor vermelha
+        return tree;
+    }
+
+    Tree *right-rotation(Tree *root){
+        Tree *tree=root->left;
+        root->left=tree->right;
+        tree->right=root;
+        tree->collor=root->collor;// aqui a cor da nova raiz será a cor da raiz
+        root->collor='r';//Agora a raiz(que é filho direito) recebe a cor vermelha
+        return tree;
+    }
+\end{lstlisting}
+
+    É importante observar que as rotações podem transgredir algumas das propriedades da árvore (as 6 citadas ate o momento), porem nós não estamos preocupados com isso na rotação, outras funções serão adicionadas para corrigir a árvore, e automaticamente corrigir as transgressões feitas pela rotação.
+
+%% ------------------------------------------------------------------------- %%
+\section{Demais funções de balanceamento de árvores rubro-negras}
+\label{sec:balanceamento}
+    
+    \noindent Além das funções de rotação, que como ditas anteriormente são funções básicas de balanceamento, temos algumas outras funções que são para auxiliar no balanceamento, essas funções ajudam a manter a integridade da árvore, no quesito da árvore sempre respeitar as regras suas regras de existência, pois, ao inserir ou remover pode ser violada alguma propriedade da árvore, para recupera-las temos as funções abaixo:\\
+    
+\begin{lstlisting} [backgroundcolor=\color{cyan!10}]
+    Tree *move_redToleft(Tree *root){
+        swapCollor(&root);
+        //Ao mudar a cor caso apareça dois vermelhos seguidos
+        if(root->right && root->right->left && returnCollor(root->right->left)=='r'){
+            root->right=right_rotation(root->right);
+            root=left_rotation(root);
+            swapCollor(&root);
+        }
+        return root;
+    }
+
+    Tree *move_redToRight(Tree *root){
+        swapCollor(&root);
+        //Mesmo que o caso passado, ao mudar a cor se aparecer dois vermelhos seguidos
+        if(root->left && root->left->left && returnCollor(root->left->left)=='r'){
+            root=right_rotation(root->right);
+            swapCollor(&root);
+        }
+        return root;
+    }
+    
+    Tree balance(Tree **root){
+        //Condição garante que um nó vermelho nunca seja filho esquerdo
+        if(returnCollor((*root)->right)=='r'){
+            (*root)=left_rotation((*root));
+        }
+        //Caso o filho da direita e neto da esquerda sejam vermelhos
+        if((*root)->left && returnCollor((*root)->right)=='r' &&
+            returnCollor((*root)->left->left)=='r')
+        {
+            (*root)=right_rotation(*root);
+        }
+        //Se os dois filhos forem vermelhos a cor será trocada
+        if(returnCollor((*root)->left)=='r' && returnCollor((*root)->right)='r'){
+            swapCollor(root);
+        }
+    }
+\end{lstlisting}
+    \\
+    
+    Dependendo do caso pode-se usar qualquer uma dessas funções apresentadas ou usar todas, porque há situações que se ele entrar em um determinado if pode ser que bagunce a árvore sendo corrigida no próximo if.
+%% ------------------------------------------------------------------------- %%
+\section{Inserção}
+\label{sec:insercao}
+
+    \noindent A operação de inserção em uma árvore rubro-negra precisamos analisar os mesmos casos das árvores binárias. O primeiro caso, se a raiz é null, somente inserimos o nó na raiz. O segundo, se o valor a ser inserido é menor que a raiz, aí vamos à sub-árvore a esquerda. O terceiro, se o valor é maior que a raiz, caminhamos para a sub-árvore a direita. Esta função de inserção será implementada recursivamente, isso é feito devido ao fato de quando estiver voltando da recursão poder verificar as propriedades das árvores, o que já é uma grande vantagem. Caso algum nó esteja violando as leis da árvore aí serão aplicadas as funções de correção, mencionadas em tópicos anteriores.
+    
+    Sempre quando vamos inserir devemos observar que o nó que inserimos sempre iniciará vermelho, e nas correções que ele pode mudar ou não de cor. E também devemos observar os casos de inserções para ser tratados que são a partir de quando já há a raiz na árvore. O primeiro caso é se o pai é preto, como se quer inserir um vermelho basta inserir normalmente, não precisa tratar neste caso. Já o segundo caso verifica se o pai é vermelho, é necessário verificar o tio, se o tio é vermelho somente modificar as cores do avô do pai e do tio, neste caso, se a raiz for avô é necessário voltar sua cor para preto, porém se o tio é preto é necessário fazer uma rotação à direita e trocar as cores deixando o pai preto e os dois filhos vermelhos. O código da inserção a seguir já faz todas estas análises, lembrando que o mesmo é para árvore rubro-negra caída para a esquerda.\\
+
+\begin{lstlisting} [backgroundcolor=\color{cyan!10}]
+    void insert_tree(Tree *root, int info){
+        insert(root, info);
+        if(root!= NULL)
+        root->collor='b';
+    }
+
+    void *insert(Tree *root, int info){
+        if(root==NULL){
+        Tree *tree=(Tree*) malloc(sizeof(Tree));
+        tree->left=NULL;
+        tree->right=NULL;
+        tree->info=info;
+        tree->collor='r';
+        root=tree;
+        return (root);
+    }
+    else{
+        if(root->info>info) //move to left
+            root->left=insert(root->left,info);
+        else//move to right
+            root->right=insert(root->right,info);
+    }
+    //Não posso ter filho a direita vermelho
+    if(returnCollor(root->right)=='r' && returnCollor(root->left)=='b')
+        root=left_rotation(root);
+    //Não posso ter dois filhos vermelho seguidos
+    if(returnCollor(root->left)=='r' && returnCollor(root->left->left)=='r')
+        root=right_rotation(root);
+    if(returnCollor(root->left)=='r' && returnCollor(root->right)=='r')
+        swapCollor(&root);
+    return root;
+}
+
+\end{lstlisting}
+
+\\
+    No código anterior pode ser observado que há duas funções, a primeira é uma função de controle, ela é que deve ser chamada na main, e ela (a primeira) é que faz a chamada da segunda função onde realmente é feira a inserção.
+%% ------------------------------------------------------------------------- %%
+
+\section{Remoção}
+\label{cap:remocao}
+    
+    \noindent Na remoção devemos analisar os mesmos três casos que analisamos quando vamos fazer a remoção na AVL, a saber:
+        \begin{enumerate}
+            \item Quando é nó folha;
+            \item Nó possui apenas 1 filho;
+            \item Nó possui os dois filhos;
+        \end{enumerate}
+        
+    Para tratarmos cada caso desses devemos primeiramente ter atenção com alguns fatores que podem estar sobre a árvore, o primeiro é caso a árvore esteja vazia, porque logicamente não podemos remover em uma árvore que não tenha nada. Outro ponto a se observar é caso seja feita a remoção do último (único) nó da árvore, pois caso isso ocorra devemos lembrar de atribuir o valor null em nossa estrutura. Devemos observar também o balanceamento pois, do mesmo jeito que a cada vez que inserimos em nossa árvore pode ocorrer o desbalanceamento, a medida que removemos também pode ocorrer o mesmo problema, para corrigir isso devemos analisar da mesma maneira que analisamos o balanceamento na inserção, ou seja, a melhor maneira é fazer uma função recursiva para pesquisar o nó que é pra ser movido, pois ao acharmos apenas aplicamos a remoção e retornamos a recursividade verificando as propriedades.\\
+    
+    \begin{lstlisting} [backgroundcolor=\color{cyan!10}]
+    
+    int remove_tree(Tree *root, int info){
+        if(search(root, info)){
+            root=removal(root, info);
+            if(root!=NULL)
+                root->collor='b';
+            return 1;
+        }
+        return 0;
+    }
+
+    Tree *removal(Tree *root, int info){
+        if(info<root->info){
+            if(returnCollor(root->left)=='b' && returnCollor(root->left->left)=='b')
+                root=move_redToleft(root);
+
+            root->left=removal(root->left, info);
+        }
+        else{
+            if(returnCollor(root->left)=='r')
+            root=right_rotation(root);
+            if(info==root->info && root->right==NULL){
+                free(root);
+                return NULL;
+            }
+            if(returnCollor(root->right)=='b' && returnCollor(root->right->left)=='b')
+            root=move_redToRight(root);
+            if(info == root->info){
+                Tree *aux= search_minor(root->right);
+                root->info=aux->info;
+                root->right=remove_minor(root->right);
+            }
+            else
+                root->right=removal(root->right, info);
+        }
+        return balance(root);
+    }
+
+    \end{lstlisting}
+    
+    \\Como já mencionado o código de remoção por si só já balanceia a árvore, pois quando é feita a pesquisa para encontrar o nó ela já é feita recursiva para quando retornar já retornar devolvendo as propriedades da árvore. Observe que quando é falado em pesquisa não é a função de pesquisa da primeira função, pois, a mesma serve somente para verificar se o que queremos remover realmente existe.
+    
+    Na primeira função de remoção apresentada segue o mesmo princípio da inserção, no quesito de gerenciamento da remoção, pois ela primeiro verifica se a função existe, caso a resposta seja afirmativa então ele chamará a função de remoção, a qual Realizará uma pesquisa novamente na árvore, porém esta é a pesquisa recursiva que já foi mencionada anteriormente, que ao voltar da recursão irá verificar se há algum desbalanceamento. Na função removal quando o nó é encontrado ela chama duas funções desconhecidas ate o momento, a seguir as funções que também são necessárias para conseguirmos fazer uma remoção com sucesso na árvore rubro-negra.
+    
+    \begin{lstlisting} [backgroundcolor=\color{cyan!10}]
+        Tree *search_minor(Tree *root){
+            Tree *aux1=root;
+            Tree *aux2=root->right;
+            while (aux2!=NULL) {
+                aux1=aux2;
+                aux2=aux2->left;
+            }
+            return aux1;
+            }
+            
+        Tree *remove_minor(Tree *root){
+            if(root->left == NULL){
+                free(root);
+                return NULL;
+            }
+            if(returnCollor(root->left)=='b' && returnCollor(root->left->left)=='b')
+                root=move_redToleft(root);
+            root->left=remove_minor(root->left);
+            return balance(root);
+        }
+    \end{lstlisting}
+
+
+%% ------------------------------------------------------------------------- %%
+\chapter{Árvore B}
+\label{sec:b_tree}
+
+    \noindent Árvores B são projetadas para trabalhar com dispositivos de armazenamento secundário que contém um alto custo de acesso aos dados. Considerando que a aplicação seja muito grande e que não possa ser guardada somente na memória principal (RAM), estas árvores visam otimizar a entrada e saída de dados. Pois ao trabalhar com armazenamento secundário, enquanto menos acessos ao disco forem feitos melhor será o desempenho do sistema.
+    
+    Ao implementarmos a árvore b devemos nos atentar a algumas propriedades que a mesma possui.
+
+\begin{enumerate}
+    \item Em uma árvore b a raiz deve ter no mínimo duas e no máximo n sub árvores, onde n é o grau da árvore;
+    \item Se uma árvore tem grau n, significa que ela vai ter até n-1 elementos na raiz;
+    \item Caso o nó não seja raiz ou nó folha, o numero minimo de sub árvores que um nó pode ter é $ \lceil \frac{n}{2} \rceil-1$;
+    \item Todas as folhas sempre estarão no mesmo nível;
+    \item Os elementos em um nó devem estar todos ordenados;
+\end{enumerate}
+
+A declaração da estrutura de uma árvore binária é um pouco diferente das árvores que conhecemos, pois ela contém um vetor de link para os outros elementos encontrados nas árvores.\\
+
+\begin{lstlisting} [backgroundcolor=\color{cyan!10}]
+    typedef struct No{
+	    int key[MAX+1], count;
+	    struct No *pointer[MAX+1];
+    }T_tree;
+\end{lstlisting}
+%% ------------------------------------------------------------------------- %%
+
+\section{Busca}
+
+    \noindent Para buscar uma chave em uma árvore b a operação é bastante semelhante ao da árvore binária de busca, a mesma forma de caminhar na árvore é utilizada, porém ele terá o opção de navegar dentro de um nó, onde há vários elementos.
+
+\begin{lstlisting} [backgroundcolor=\color{cyan!10}]
+
+    void search(int info, int *pos, T_tree *root){
+        if(!root){
+            return;
+        }
+    
+        if(info < root->key[1]){
+            *pos = 0;
+        }
+    	else{
+            for(*pos = root->count;(key < root->key[*pos] && *pos > 1); (*pos)--);
+            if(info == root->key[*pos]){
+                printf("value: %d \n", info);
+                return;
+            }
+        }
+        search(info, pos, root->pointer[*pos]);
+        return;
+    }
+    
+\end{lstlisting}
+
+
+%% ------------------------------------------------------------------------- %%
+\section{Inserção}
+\label{sec:insercao}
+    
+    \noindent Como nas demais árvores a inserção de um elemento sempre será em um nó folha, porém por esta ser uma árvore balanceada também, dependendo da inserção a árvore pode desbalancear, para balancearmos ela diferencia das árvores AVL's, pois na mesma utilizamos rotações, a direita e a esquerda, dependendo da situação, nas árvores b nós temos que fazer um processo chamado redistribuição, que consiste basicamente em verificarmos se a folha que queremos inserir está completa, caso esteja a folha será dividida o seu elemento central irá para o nó do pai, caso o nó esteja cheio será redistribuida novamente, e assim recursivamente ate finalizar a inserção, se não estiver basta inserirmos normalmente. A seguir o código de inserção e suas funções.
+
+\begin{lstlisting} [backgroundcolor=\color{cyan!10}]
+/* Adiciona o valor na posição apropriada */
+void addkeyToNo(int key, int pos, T_tree *No,T_tree *filho){
+    int i = No->count;
+    while (i > pos){
+        No->key[i+1] = No->key[i];
+        No->pointer[i+1] = No->pointer[i];
+        i--;
+    }
+    No->key[i+1] = key;
+    No->pointer[i+1] = filho;
+    No->count++;
+}
+
+/* Separa o Nó */
+void spliT_treede (int key, int *pval, int pos, T_tree *no,T_tree *filho, T_tree **newNo){
+    int mediana, i;
+
+    if(pos > MIN)
+        mediana = MIN + 1;
+    else
+        mediana = MIN;
+
+    *newNo = (T_tree *)malloc(sizeof(T_tree));
+    i = mediana + 1;
+    while (i <= MAX){
+        (*newNo)->key[i - mediana] = no->key[i];
+        (*newNo)->pointer[i - mediana] = no->pointer[i];
+        i++;
+    }
+    no->count = mediana;
+    (*newNo)->count = MAX - mediana;
+
+    if(pos <= MIN){
+        addkeyToNo(key, pos, no, filho);
+    }
+	else{
+        addkeyToNo(key, pos - mediana, *newNo, filho);
+    }
+    *pval = no->key[no->count];
+    (*newNo)->pointer[0] = no->pointer[no->count];
+    no->count--;
+}
+
+/* Coloca o valor solicitado dentro do nó */
+int setValueInNode(int key, int *pval,T_tree *root, T_tree **filho){
+    int pos;
+    if(!root){
+        *pval = key;
+        *filho = NULL;
+        return 1;
+    }
+
+    if(key < root->key[1]){
+       pos = 0;
+    }
+	else{
+        for(pos = root->count;(key < root->key[pos] && pos > 1); pos--);
+        if(key == root->key[pos]){
+            printf("Duplicacoes nao sao permitidas\n");
+            return 0;
+        }
+    }
+    if(setValueInNode(key, pval, root->pointer[pos], filho)){
+        if(root->count < MAX){
+            addkeyToNo(*pval, pos, root, *filho);
+        } else{
+            spliT_treede(*pval, pval, pos, root, *filho, filho);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* Insere um valor na árvore */
+void insert(T_tree **root, int info){
+    int flag, i;
+    T_tree *filho;
+
+    flag = setValueInNode(info, &i, *root, &filho);
+    if(flag)
+        *root = createNo(i, *root, filho);
+}
+
+\end{lstlisting}
+
+    Nas funções acima a função insert recebe a raiz e o valor que é para ser inserido e chama as demais funções para inserir, em cada função há os comentários sobre o que cada uma faz. Na árvore b, uma árvore só aumenta sua altura quando a raiz é dividida, que é o pior caso que pode ocorrer ao inserir um nó.
+
+
+\section{Remoção}
+\label{sec:remoção}
+
+\noindent A remoção é um caso mais complicado que encontramos nas árvores, e nesta não é diferente, o caso é um pouco mais complicado. Para remover inicialmente devemos realizar uma busca, para encontrarmos o que desejamos remover. O primiro caso, é o caso mais simples, se o nó é folha somente removemos, como acostumados a remover. O segundo o caso é igual ao caso de remoção da AVL, removemos e substituímos o nó pelo imediatamente menor ou o imediatamente maior, então verificamos se o nó contém o mínimo de elementos que um nó pode ter, se os dois irmãos adjacentes (estão na mesma altura) contém mais do que o mínimo que um nó pode ter, devemos  fazer uma redistribuição, caso contrario fazer uma concatenação. Se for feita uma concatenação deve-se novamente verificar as propriedades da árvore, caso ainda estejam erradas realizar uma concatenação ou uma redistribuição novamente.\\
+
+
+\begin{lstlisting} [backgroundcolor=\color{cyan!10}]
+/* Faz a cópia do sucessor do valor a ser deletado */
+void copySuccessor(T_tree *root, int pos){
+    T_tree *aux;
+    aux = root->pointer[pos];
+
+    while(aux->pointer[0] != NULL)
+        aux = aux->pointer[0];
+    root->key[pos] = aux->key[1];
+}
+
+/* remove o valor de um nó e reorganiza os valores */
+void removeKey(T_tree *root, int pos){
+    int i = pos + 1;
+    while (i <= root->count){
+        root->key[i-1] = root->key[i];
+        root->pointer[i-1] = root->pointer[i];
+        i++;
+    }
+    root->count--;
+}
+
+/* Troca o valor do pai com o do filho da direita */
+void doRightShift(T_tree *root, int pos){
+    T_tree *aux = root->pointer[pos];
+    int i = aux->count;
+
+    while (i > 0){
+        aux->key[i+1] = aux->key[i];
+        aux->pointer[i+1] = aux->pointer[i];
+    }
+    aux->key[1] = root->key[pos];
+    aux->pointer[1] = aux->pointer[0];
+    aux->count++;
+
+    aux = root->pointer[pos-1];
+    root->key[pos] = aux->key[aux->count];
+    //root->pointer[pos] = x->pointer[x->count];
+    aux->count--;
+    return;
+}
+
+/* Troca o valor do pai para com o do filho da esquerda */
+void doLeftShift(T_tree *root, int pos){
+    int i = 1;
+    T_tree *aux = root->pointer[pos - 1];
+
+    aux->count++;
+    aux->key[aux->count] = root->key[pos];
+    aux->pointer[aux->count] = root->pointer[pos]->pointer[0];
+
+    aux = root->pointer[pos];
+    root->key[pos] = aux->key[1];
+    aux->pointer[0] = aux->pointer[1];
+    aux->count--;
+
+    while (i <= aux->count){
+        aux->key[i] = aux->key[i + 1];
+        aux->pointer[i] = aux->pointer[i + 1];
+        i++;
+    }
+    return;
+}
+
+/* Junção de nós, para quando há um nó vazio após o processo de remoção, faz-se a junção entre o valor no nó pai
+mais próximo do valor removido com o valor mais próximo de um nó irmão do valor removido. */
+void mergeNodes(T_tree *root, int pos){
+    int i = 1;
+    T_tree *aux1 = root->pointer[pos], *aux2 = root->pointer[pos - 1];
+
+    aux2->count++;
+    aux2->key[aux2->count] = root->key[pos];
+    aux2->pointer[aux2->count] = aux1->pointer[0];
+
+    while (i <= aux1->count){
+        aux2->count++;
+        aux2->key[aux2->count] = aux1->key[i];
+        aux2->pointer[aux2->count] = aux1->pointer[i];
+        i++;
+    }
+
+    i = pos;
+    while (i < root->count){
+        root->key[i] = root->key[i + 1];
+        root->pointer[i] = root->pointer[i + 1];
+        i++;
+    }
+    root->count--;
+    free(aux1);
+}
+
+/* Função para os ajustes necessários após a remoção de um valor.
+faremos a função necessária de ajuste dependendo da posição do filho que teve um de seus valores
+removidos */
+void adjusT_treede(T_tree *root, int pos){
+    if(!pos){
+        if(root->pointer[1]->count > MIN){
+            doLeftShift(root, 1);
+        }
+		else{
+            mergeNodes(root, 1);
+        }
+    }
+	else{
+        if(root->count != pos){
+            if(root->pointer[pos - 1]->count > MIN){
+                doRightShift(root, pos);
+            }
+			else{
+                if(root->pointer[pos + 1]->count > MIN){
+                    doLeftShift(root, pos + 1);
+                } else{
+                    mergeNodes(root, pos);
+                }
+            }
+        }
+		else{
+            if(root->pointer[pos - 1]->count > MIN)
+                doRightShift(root, pos);
+            else
+                mergeNodes(root, pos);
+        }
+    }
+}
+
+/* Função usada para descer a árvore recursivamente e encontrar o valor a ser removido
+e especificar o processo de remoção a ser utilizado dependendo da quantidade de filhos que o nó
+tem e de onde se encontra o valor a ser removido*/
+int delKeyFromNo(int key, T_tree *root){
+    int pos, flag = 0;
+    if(root){
+        if(key < root->key[1]){
+            pos = 0;
+        }
+		else{
+            for(pos = root->count;(key <= root->key[pos] && pos > 0); pos--){
+	            if(key == root->key[pos]){
+	            	//flag indica que o valor a ser removido foi encontrado
+	                flag = 1;
+	                break;
+	            }
+				else{
+	                flag = 0;
+	            }
+	        }
+        }
+        if(flag){
+        	/* caso valor a ser removido não seja de um nó folha */
+           if(root->pointer[pos-1]){
+	            copySuccessor(root, pos);
+	            /* remoção recursiva do valor no nó sucessor (troca-se o valor a ser removido
+	            pelo valor do nó sucessor, logo o programa busca o valor a ser removido no nó sucessor)*/
+	            flag = delKeyFromNo(root->key[pos], root->pointer[pos]);
+        	}
+			else{
+            	removeKey(root, pos);
+        	}
+        }
+		else{
+			/* continua a busca na árvore pelo valor dado*/
+            flag = delKeyFromNo(key, root->pointer[pos]);
+        }
+        /* caso o nó onde o valor foi removido tenha um ponteiro a direita do valor removido é necessário checar
+        se não há ajustes a serem feitos.*/
+        if(root->pointer[pos]){
+            if(root->pointer[pos]->count < MIN)
+                adjusT_treede(root, pos);
+        }
+    }
+    return flag;
+}
+
+/* Função inicial de remoção de valor da ��rvore B */
+void deletion(int key,T_tree **search){
+    T_tree *temp;
+    if(!delKeyFromNo(key, *search)){
+        printf("Valor nao esta presente na arvore\n");
+        return;
+    }
+	else{
+        if((*search)->count == 0){
+            temp = *search;
+            *search = (*search)->pointer[0];
+            free(temp);
+        }
+    }
+    return;
+}
+\end{lstlisting}
+
+O código tem várias funções, cada função possui o comentário falando qual o papel da cada uma na remoção, mas são as funções da remoção e auxiliares da remoção, que são as de concatenação, ou redistribuição.
+
+
+%% ------------------------------------------------------------------------- %%
+\chapter{Conclusão}
+\label{ape:Conclusão}
+
+\noindent As árvores apresentadas são mais uma das estrutura de dados que são de suma importância para uma boa base computacional. Não podemos classificar cada árvore apresentada e dizer qual é melhor ou qual é pior, pois cada uma tem sua vantagem dependendo da aplicação, por exemplo as árvores AVL tem vantagens nas árvores rubro-negras na operação de busca, no entanto as rubro-negras são mais vantajosas nas operações de inserção e remoção, ou seja, ao fazer-mos nossa aplicação devemos analisar se a mesma realizará mais operações de inserção e remoção ou se realizará mais operações de busca, ou ainda em questão de árvores b, se ela trabalhará com muito ou poucos dados, então assim podemos escolher uma árvore adequada dependendo da necessidade.
+
+    \nocite{NZ}
+    \nocite{PN} 
+    \nocite{DT}
+    \bibliographystyle{abbrv}
+    \bibliography{manual_uftex}
+
+\end{document}
